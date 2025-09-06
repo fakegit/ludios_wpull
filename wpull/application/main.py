@@ -1,14 +1,11 @@
 import sys
-import tornado.platform.asyncio
+import traceback
 
 from wpull.application.builder import Builder
 from wpull.application.options import AppArgumentParser
 
 
-def main(exit=True, install_tornado_bridge=True, use_signals=True):
-    if install_tornado_bridge:
-        tornado.platform.asyncio.AsyncIOMainLoop().install()
-
+def main(exit=True, use_signals=True):
     arg_parser = AppArgumentParser()
     args = arg_parser.parse_args()
 
@@ -19,10 +16,15 @@ def main(exit=True, install_tornado_bridge=True, use_signals=True):
         application.setup_signal_handlers()
 
     if args.debug_manhole:
-        import manhole
-        import wpull
-        wpull.wpull_builder = builder
-        manhole.install()
+        try:
+            import manhole
+        except ImportError:
+            print("Could not import manhole module.", file=sys.stderr)
+            traceback.print_exc()
+        else:
+            import wpull
+            wpull.wpull_builder = builder
+            manhole.install()
 
     exit_code = application.run_sync()
 
